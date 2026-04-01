@@ -14,6 +14,7 @@ class SiteType(str, Enum):
     MDBOOK = "mdbook"
     MKDOCS = "mkdocs"
     STARLIGHT = "starlight"
+    GITBOOK = "gitbook"
     GENERIC = "generic"
 
 

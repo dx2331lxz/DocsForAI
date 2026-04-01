@@ -93,6 +93,12 @@ docsforai crawl https://example.com/docs --type vitepress
 - 提取 `[data-pagefind-body]` 内容区，自动剔除右侧目录、编辑链接、上下翻页等噪音
 - 测试：`https://starlight.astro.build/` 采集 35 页
 
+### GitBook
+- 通过 `<meta name="generator" content="GitBook ...">` 或 `static*.gitbook.com` 脚本自动识别
+- 优先通过 `sitemap.xml`（sitemapindex）发现所有页面，回退到侧边栏链接提取
+- 提取 `<main>` 内容区，自动清除 GitBook 特有的标题锚点图标（`div.hash` → “hashtag”）、外链箭头 SVG（“arrow-up-right”）等噪音
+- 测试：`https://agpt.co/docs` 采集 174 页
+
 ### MkDocs（含 Material 主题与内置默认主题）
 - 自动识别 MkDocs 所有主题变体：
   - **Material 主题**：通过 `generator` meta 标签（`zensical`/`mkdocs`）或 `.md-nav--primary` CSS 类识别
@@ -151,7 +157,7 @@ Arguments:
 Options:
   -o, --output   PATH    输出目录 [default: ./output]
   -f, --format   FORMAT  导出格式，可重复使用 (multi-md|single-md|jsonl)
-  -t, --type     TYPE    强制站点类型 (vitepress|docsify|mintlify|feishu-docs|docusaurus|mdbook|mkdocs|starlight|generic)
+  -t, --type     TYPE    强制站点类型 (vitepress|docsify|mintlify|feishu-docs|docusaurus|mdbook|mkdocs|starlight|gitbook|generic)
   --concurrency  INT     最大并发请求数 [default: 5]
   --delay        FLOAT   请求间隔秒数 [default: 0.1]
   --timeout      FLOAT   HTTP 超时秒数 [default: 30.0]
@@ -178,6 +184,7 @@ src/docsforai/
 │   ├── mdbook.py       # mdBook 专用爬虫（静态 toc.html）
 │   ├── mkdocs.py       # MkDocs 专用爬虫（Material + 默认主题）
 │   ├── starlight.py    # Starlight/Astro 专用爬虫
+│   ├── gitbook.py      # GitBook 专用爬虫（sitemap + 噪音清除）
 │   ├── feishu.py       # 飞书开放平台专用爬虫
 │   └── generic.py      # 通用 BFS 兜底爬虫
 └── exporters/

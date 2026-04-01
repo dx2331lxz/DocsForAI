@@ -80,6 +80,15 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
         if "vitepress" in src.lower() or "/.vitepress/" in src:
             return SiteType.VITEPRESS
 
+    # ── GitBook ─────────────────────────────────────────────────────────────
+    # GitBook injects a <meta name="generator" content="GitBook (...)"> tag
+    # and loads all assets from static*.gitbook.com.
+    if generator and "gitbook" in (generator.get("content") or "").lower():
+        return SiteType.GITBOOK
+    for tag in soup.find_all("script", src=True):
+        if "gitbook.com" in (tag.get("src") or ""):
+            return SiteType.GITBOOK
+
     # ── Starlight (Astro) ──────────────────────────────────────────────────────
     # Starlight injects unique IDs and classes no other framework uses.
     if soup.select("#starlight__sidebar, #starlight__search, .sl-markdown-content"):
