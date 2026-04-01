@@ -114,7 +114,7 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
             return SiteType.DOCUSAURUS
 
     # ── MkDocs (Material theme and compatible) ────────────────────────────────
-    # 1. Generator meta tag
+    # 1. Generator meta tag (Material / Zensical)
     gen_content = (generator.get("content") or "").lower() if generator else ""
     if any(x in gen_content for x in ("mkdocs", "zensical")):
         return SiteType.MKDOCS
@@ -123,7 +123,11 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
     if soup.select(".md-nav--primary, .md-content__inner, .md-typeset"):
         return SiteType.MKDOCS
 
-    # 3. Asset URLs containing mkdocs
+    # 3. MkDocs default/readthedocs theme: unique IDs injected by all mkdocs builds
+    if soup.select("#mkdocs-search-results, #toc-collapse, #mkdocs-search-query"):
+        return SiteType.MKDOCS
+
+    # 4. Asset URLs containing mkdocs
     for tag in soup.find_all(["script", "link"]):
         src = tag.get("src") or tag.get("href") or ""
         if "mkdocs" in src.lower():

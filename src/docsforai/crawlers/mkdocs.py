@@ -13,14 +13,15 @@ from .base import BaseCrawler
 
 
 class MkDocsCrawler(BaseCrawler):
-    """Crawls MkDocs sites (Material theme and compatible variants).
+    """Crawls MkDocs sites — supports both Material theme and the built-in default theme.
 
-    Strategy:
-    1. Fetch the start page; extract the ``nav.md-nav--primary`` sidebar to
-       obtain the full ordered navigation with section breadcrumbs.
-    2. Concurrently fetch every page linked in the nav.
-    3. Extract the ``article.md-content__inner`` content area and convert to
-       Markdown, stripping sidebar / footer chrome.
+    Material theme strategy:
+    1. Parse ``nav.md-nav--primary`` sidebar (server-rendered, full page list).
+    2. Extract ``article.md-content__inner`` content area.
+
+    Default / ReadTheDocs theme strategy:
+    1. Parse the top ``div.navbar-nav`` dropdown menus for the page list.
+    2. Extract ``div[role=main]`` (or ``div.col-md-9``) content area.
     """
 
     async def crawl(self) -> DocSite:
@@ -63,6 +64,13 @@ class MkDocsCrawler(BaseCrawler):
             if title:
                 return title
 
+        # MkDocs default theme: brand link in the navbar
+        brand = soup.select_one(".navbar-brand")
+        if brand:
+            title = brand.get_text(strip=True)
+            if title:
+                return title
+
         # Fallback: <title> — take the part after the last separator
         title_tag = soup.find("title")
         if title_tag:
@@ -87,13 +95,26 @@ class MkDocsCrawler(BaseCrawler):
         page_url: str,
     ) -> list[tuple[list[str], str]]:
         """Return ordered ``[(breadcrumb, abs_url), ...]`` from the sidebar nav."""
+        # ──── Material theme: nav.md-nav--primary ──────────────────────────────
         primary = soup.find("nav", class_="md-nav--primary")
-        if not primary:
-            return self._fallback_links(soup, page_url)
+        if primary:
+            return self._extract_material_nav(primary, page_url)
 
+        # ──── Default / ReadTheDocs theme: top navbar dropdown ─────────────────
+        navbar_nav = soup.select_one(".navbar-nav")
+        if navbar_nav:
+            return self._extract_default_nav(navbar_nav, page_url)
+
+        return self._fallback_links(soup, page_url)
+
+    def _extract_material_nav(
+        self,
+        primary: BeautifulSoup,
+        page_url: str,
+    ) -> list[tuple[list[str], str]]:
+        """Extract nav links from MkDocs Material theme ``nav.md-nav--primary``."""
         top_ul = primary.find("ul", class_="md-nav__list")
         if not top_ul:
-            # Flat fallback: just grab all md-nav__link anchors
             return self._links_from_nav(primary, [], page_url)
 
         seen: set[str] = set()
@@ -127,6 +148,42 @@ class MkDocsCrawler(BaseCrawler):
                             title = sub_a.get_text(strip=True)
                             bc = [section_name, title] if section_name else [title]
                             results.append((bc, url))
+
+        return results
+
+    def _extract_default_nav(
+        self,
+        navbar_nav: BeautifulSoup,
+        page_url: str,
+    ) -> list[tuple[list[str], str]]:
+        """Extract nav links from the MkDocs default/readthedocs theme top navbar."""
+        seen: set[str] = set()
+        results: list[tuple[list[str], str]] = []
+
+        for li in navbar_nav.find_all("li", recursive=False):
+            dropdown = li.find("ul", class_="dropdown-menu")
+            top_a = li.find("a", recursive=False)
+            section_name = top_a.get_text(strip=True) if top_a else ""
+
+            if dropdown:
+                # Section dropdown: collect all sub-links
+                for sub_a in dropdown.find_all("a", href=True):
+                    href = sub_a["href"]
+                    if self._is_page_href(href):
+                        url = self._abs_url(href, page_url)
+                        if url not in seen:
+                            seen.add(url)
+                            title = sub_a.get_text(strip=True)
+                            bc = [section_name, title] if section_name else [title]
+                            results.append((bc, url))
+            elif top_a:
+                # Direct page link
+                href = top_a.get("href", "")
+                if self._is_page_href(href):
+                    url = self._abs_url(href, page_url)
+                    if url not in seen:
+                        seen.add(url)
+                        results.append(([section_name], url))
 
         return results
 
@@ -232,6 +289,8 @@ class MkDocsCrawler(BaseCrawler):
             soup.select_one("article.md-content__inner")
             or soup.select_one("div.md-content__inner")
             or soup.select_one(".md-content")
+            or soup.select_one("div[role=main]")
+            or soup.select_one("div.col-md-9")
             or soup.select_one("article")
             or soup.select_one("main")
         )
@@ -258,6 +317,12 @@ class MkDocsCrawler(BaseCrawler):
             ".md-announce",
             ".md-skip",
             ".headerlink",
+            # MkDocs default/readthedocs theme chrome
+            ".bs-sidebar",
+            ".navbar",
+            ".modal",
+            ".mkdocs-page-nav",
+            "footer",
         ):
             for el in content_el.select(sel):
                 el.decompose()

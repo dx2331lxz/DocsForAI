@@ -87,13 +87,15 @@ docsforai crawl https://example.com/docs --type vitepress
 - 提取 `#mdbook-content main` 内容区，自动清除上下翻页按钮等导航噪音。
 - 测试：已对 `https://rust-lang.github.io/mdBook/` 运行爬虫，采集到 31 页。
 
-### MkDocs（含 Material 主题）
-- 自动识别 MkDocs / Material theme（通过 `generator` meta 标签或 `.md-nav--primary` 等特征 CSS 类）。
-- 直接解析服务端渲染的 `nav.md-nav--primary` 侧边栏，完整还原章节树与面包屑层级，无需 JavaScript。
-- 同时支持 `.html` 扩展名（如 ReadTheDocs）和目录风格 URL（如 `concepts/models/`）。
-- 提取 `article.md-content__inner` 内容区，自动剔除侧边栏、页脚等噪音。
-- 内置 Cloudflare 反爬绕过：当 httpx 被 Cloudflare JS Challenge 拦截时，自动回退到系统 `curl`（无需额外依赖）。
-- 测试：已对 `https://scrapling.readthedocs.io/en/latest/`（Cloudflare 保护）采集到 33 页，`https://docs.pydantic.dev/latest/` 采集到 88 页。
+### MkDocs（含 Material 主题与内置默认主题）
+- 自动识别 MkDocs 所有主题变体：
+  - **Material 主题**：通过 `generator` meta 标签（`zensical`/`mkdocs`）或 `.md-nav--primary` CSS 类识别
+  - **内置默认/ReadTheDocs 主题**：通过页面唯一 ID（`#mkdocs-search-results`、`#toc-collapse`）识别
+- **Material 主题**：解析服务端渲染的 `nav.md-nav--primary` 侧边栏；提取 `article.md-content__inner` 内容区
+- **默认主题**：解析顶部 `div.navbar-nav` 下拉菜单获取完整页面列表；提取 `div[role=main]` 内容区
+- 同时支持 `.html` 扩展名（ReadTheDocs）和目录风格 URL（`concepts/models/`）
+- 内置 Cloudflare 反爬绕过：httpx 被拦截时自动回退到系统 `curl`
+- 测试：`https://scrapling.readthedocs.io/en/latest/`（Cloudflare + Material 主题）采集 33 页；`https://docs.pydantic.dev/latest/`（Material）采集 88 页；`https://www.mkdocs.org/`（内置默认主题）采集 19 页
 
 ### Feishu (飞书开放平台)
 - 专用爬虫：通过飞书开放平台暴露的内部 API 拉取完整的目录树和原始 Markdown（`/document/<fullpath>.md`）。
