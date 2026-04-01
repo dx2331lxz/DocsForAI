@@ -10,7 +10,14 @@ from .models import SiteType
 
 
 async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
-    """Fetch the root page and infer whether it is VitePress, Docsify, Mintlify, or generic."""
+    """Fetch the root page and infer whether it is VitePress, Docsify, Mintlify, Feishu, or generic."""
+    # ── Feishu Open Platform ───────────────────────────────────────────────────
+    # Detect by hostname before even fetching, to avoid React SPA noise.
+    from urllib.parse import urlparse as _urlparse
+    _host = _urlparse(url).netloc.lower()
+    if _host in ("open.feishu.cn", "open.larkoffice.com"):
+        return SiteType.FEISHU_DOCS
+
     try:
         resp = await client.get(url, follow_redirects=True)
         resp.raise_for_status()

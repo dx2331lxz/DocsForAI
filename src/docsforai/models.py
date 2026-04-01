@@ -9,6 +9,7 @@ class SiteType(str, Enum):
     VITEPRESS = "vitepress"
     DOCSIFY = "docsify"
     MINTLIFY = "mintlify"
+    FEISHU_DOCS = "feishu-docs"
     GENERIC = "generic"
 
 
