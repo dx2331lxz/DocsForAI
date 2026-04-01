@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import re
 from typing import TYPE_CHECKING
 
 import httpx
@@ -64,9 +66,75 @@ class VitePressCrawler(BaseCrawler):
     def _extract_sidebar(self, soup: BeautifulSoup) -> list[NavItem]:
         sidebar = soup.select_one(".VPSidebar")
         if sidebar:
-            return self._parse_vp_items(sidebar)
-        # Fallback: collect all unique in-site links from the page nav
+            items = self._parse_vp_items(sidebar)
+            if items:
+                return items
+        # Fallback 1: parse sidebar from __VP_SITE_DATA__ embedded script
+        site_data_items = self._extract_sidebar_from_site_data(soup)
+        if site_data_items:
+            return site_data_items
+        # Fallback 2: collect all unique in-site links from the page nav
         return self._nav_links_fallback(soup)
+
+    def _extract_sidebar_from_site_data(self, soup: BeautifulSoup) -> list[NavItem]:
+        """Parse sidebar from the ``window.__VP_SITE_DATA__`` JSON script tag."""
+        for script in soup.find_all("script"):
+            text = script.string or ""
+            # The JSON is embedded as JSON.parse("...(escaped)...") - handle escaped inner quotes
+            m = re.search(
+                r'window\.__VP_SITE_DATA__\s*=\s*JSON\.parse\("((?:[^"\\]|\\.)*)"\)',
+                text,
+                re.DOTALL,
+            )
+            if m:
+                try:
+                    # Unescape JS-escaped double quotes and backslashes
+                    raw_json = m.group(1).replace('\\"', '"').replace("\\\\", "\\")
+                    data = json.loads(raw_json)
+                except Exception:
+                    continue
+            else:
+                # Fallback: raw object assignment window.__VP_SITE_DATA__ = {...}
+                m2 = re.search(r'window\.__VP_SITE_DATA__\s*=\s*(\{.+\})\s*;?\s*$', text, re.DOTALL)
+                if not m2:
+                    continue
+                try:
+                    data = json.loads(m2.group(1))
+                except Exception:
+                    continue
+            sidebar = data.get("themeConfig", {}).get("sidebar", [])
+            if isinstance(sidebar, list):
+                return self._parse_site_data_items(sidebar, level=1)
+            if isinstance(sidebar, dict):
+                # Multi-sidebar keyed by path prefix
+                items: list[NavItem] = []
+                for entries in sidebar.values():
+                    items.extend(self._parse_site_data_items(entries, level=1))
+                return items
+        return []
+
+    def _parse_site_data_items(self, entries: list, level: int) -> list[NavItem]:
+        """Recursively convert __VP_SITE_DATA__ sidebar JSON into NavItem tree."""
+        items: list[NavItem] = []
+        for e in entries:
+            if not isinstance(e, dict):
+                continue
+            title = e.get("text", "")
+            link = e.get("link", "")
+            url = self._vp_link_to_url(link) if link else ""
+            children = self._parse_site_data_items(e.get("items", []), level + 1)
+            items.append(NavItem(title=title, url=url, level=level, children=children))
+        return items
+
+    def _vp_link_to_url(self, link: str) -> str:
+        """Convert a VitePress clean-URL link (e.g. '/intro') to the actual HTML URL."""
+        # Links ending in '/' are directory index pages - leave as-is
+        if link.endswith("/"):
+            return self._abs_url(link)
+        # Links without an extension need .html appended (static hosting)
+        if "." not in link.rsplit("/", 1)[-1]:
+            link = link + ".html"
+        return self._abs_url(link)
 
     def _parse_vp_items(self, container: Tag) -> list[NavItem]:
         """Recursively parse ``.VPSidebarItem`` elements into NavItem tree."""
