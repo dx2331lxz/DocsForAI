@@ -78,18 +78,18 @@ docsforai crawl https://example.com/docs --type vitepress
 - 回退到 `llms.txt` 索引 + 并发拉取各页 `.md` 原始文件
 - 零 HTML 解析，内容干净准确
 
-### Generic（通用兜底）
-- BFS 广度优先遍历同域链接
-- 启发式识别主内容区（`main`、`article`、`.content` 等）
-- 可通过 `--max-pages` 限制爬取深度
+### Docusaurus
+- Docusaurus 是一个常见的文档框架；DocsForAI 当前通过 `docusaurus` 爬虫兼容 Docusaurus 网站。
+- 测试：已对 `https://docusaurus.io/docs` 运行爬虫（`docsforai crawl https://docusaurus.io/docs -o ./output_docusaurus`），采集到 92 页并写入 `output_docusaurus/multi-md/`。
 
 ### Feishu (飞书开放平台)
 - 专用爬虫：通过飞书开放平台暴露的内部 API 拉取完整的目录树和原始 Markdown（`/document/<fullpath>.md`）。
 - 优点：一次性读取目录树并并发下载所有 `.md`，内容干净且保留原始 Markdown 结构。
 
-### Docusaurus
-- Docusaurus 是一个常见的文档框架；DocsForAI 当前通过 `generic` 兜底爬虫兼容 Docusaurus 网站。
-- 测试：已对 `https://docusaurus.io/docs` 运行爬虫（`docsforai crawl https://docusaurus.io/docs -o ./output_docusaurus`），采集到 202 页并写入 `output_docusaurus/multi-md/`。
+### Generic（通用兜底）
+- BFS 广度优先遍历同域链接
+- 启发式识别主内容区（`main`、`article`、`.content` 等）
+- 可通过 `--max-pages` 限制爬取深度
 
 
 ---
