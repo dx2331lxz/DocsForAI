@@ -2,6 +2,7 @@
 
 > **专为文档网站设计的轻量爬虫，让 AI 可以高质量地阅读任何文档。**
 
+[![PyPI version](https://img.shields.io/pypi/v/docsforai.svg)](https://pypi.org/project/docsforai/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -22,12 +23,25 @@
 
 ---
 
+## 安装
+
+```bash
+pip install docsforai
+```
+
+或从源码安装：
+
+```bash
+git clone https://github.com/dx2331lxz/DocsForAI.git
+cd DocsForAI
+pip install -e .
+```
+
+---
+
 ## 快速开始
 
 ```bash
-# 安装
-pip install -e .
-
 # 爬取 VitePress 文档，输出为多个 MD 文件（默认）
 docsforai crawl https://vitepress.dev/guide -o ./output
 
@@ -68,6 +82,15 @@ docsforai crawl https://example.com/docs --type vitepress
 - BFS 广度优先遍历同域链接
 - 启发式识别主内容区（`main`、`article`、`.content` 等）
 - 可通过 `--max-pages` 限制爬取深度
+
+### Feishu (飞书开放平台)
+- 专用爬虫：通过飞书开放平台暴露的内部 API 拉取完整的目录树和原始 Markdown（`/document/<fullpath>.md`）。
+- 优点：一次性读取目录树并并发下载所有 `.md`，内容干净且保留原始 Markdown 结构。
+
+### Docusaurus
+- Docusaurus 是一个常见的文档框架；DocsForAI 当前通过 `generic` 兜底爬虫兼容 Docusaurus 网站。
+- 测试：已对 `https://docusaurus.io/docs` 运行爬虫（`docsforai crawl https://docusaurus.io/docs -o ./output_docusaurus`），采集到 202 页并写入 `output_docusaurus/multi-md/`。
+
 
 ---
 
@@ -153,6 +176,8 @@ src/docsforai/
 ## 开发安装
 
 ```bash
+git clone https://github.com/dx2331lxz/DocsForAI.git
+cd DocsForAI
 pip install -e ".[dev]"
 pytest
 ```
