@@ -43,18 +43,28 @@ class MintlifyCrawler(BaseCrawler):
     """Crawls Mintlify-hosted documentation sites via llms.txt / llms-full.txt."""
 
     async def crawl(self) -> DocSite:
+        # llms-full.txt can be large (>1 MB); ensure the timeout is generous.
+        self.timeout = max(self.timeout, 60.0)
         base = self._site_base(self.start_url)
 
         async with self._make_client() as client:
-            site_title = await self._get_site_title(client, base)
-
             # Build candidate base URLs to search for llms.txt / llms-full.txt.
-            # For docs hosted at a sub-path (e.g. example.com/docs) the files
-            # live at that sub-path, not the domain root.  Try both.
-            candidates = list(dict.fromkeys([
-                self._url_dir(self.start_url),  # e.g. https://example.com/docs
-                base,                           # e.g. https://example.com
-            ]))
+            # For docs hosted at a sub-path (e.g. example.com/docs/en/overview)
+            # the files may live at any parent path.  Walk up the URL path
+            # hierarchy to cover cases like /docs/llms-full.txt.
+            candidates: list[str] = []
+            p = urlparse(self.start_url)
+            path = p.path.rstrip("/")
+            while path:
+                candidate = f"{p.scheme}://{p.netloc}{path}"
+                if candidate not in candidates:
+                    candidates.append(candidate)
+                path = path.rsplit("/", 1)[0]
+            root = f"{p.scheme}://{p.netloc}"
+            if root not in candidates:
+                candidates.append(root)
+
+            site_title = await self._get_site_title(client, candidates)
 
             # ── Strategy 1: llms-full.txt (one request, all content) ──────────
             for candidate in candidates:
@@ -109,21 +119,22 @@ class MintlifyCrawler(BaseCrawler):
         path = p.path.rstrip("/")
         return f"{p.scheme}://{p.netloc}{path}"
 
-    async def _get_site_title(self, client: httpx.AsyncClient, base: str) -> str:
+    async def _get_site_title(self, client: httpx.AsyncClient, candidates: list[str]) -> str:
         """Parse site title from llms.txt first line (# SiteName) or <title> tag."""
-        index_url = urljoin(base + "/", "llms.txt")
-        text = await self._fetch(client, index_url)
-        if text:
-            first_line = text.strip().splitlines()[0]
-            if first_line.startswith("# "):
-                return first_line[2:].strip()
-        # Fallback: HTML title tag
-        html = await self._fetch(client, base + "/")
+        for candidate in candidates:
+            index_url = urljoin(candidate.rstrip("/") + "/", "llms.txt")
+            text = await self._fetch(client, index_url)
+            if text:
+                first_line = text.strip().splitlines()[0]
+                if first_line.startswith("# "):
+                    return first_line[2:].strip()
+        # Fallback: HTML title tag from start page
+        html = await self._fetch(client, self.start_url)
         if html:
             soup = self._parse_html(html)
             tag = soup.find("title")
             if tag:
-                return tag.get_text(strip=True).split("|")[0].strip()
+                return tag.get_text(strip=True).split("|")[0].split(" - ")[0].strip()
         return "Documentation"
 
     # ──────────────────────────────────────────────────────────────────────────
