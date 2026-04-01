@@ -8,6 +8,7 @@ from enum import Enum
 class SiteType(str, Enum):
     VITEPRESS = "vitepress"
     DOCSIFY = "docsify"
+    MINTLIFY = "mintlify"
     GENERIC = "generic"
 
 

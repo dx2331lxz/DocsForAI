@@ -5,6 +5,7 @@ from ..models import SiteType
 from .base import BaseCrawler
 from .docsify import DocsifyCrawler
 from .generic import GenericCrawler
+from .mintlify import MintlifyCrawler
 from .vitepress import VitePressCrawler
 
 
@@ -15,8 +16,10 @@ def make_crawler(site_type: SiteType, url: str, **kwargs) -> BaseCrawler:
             return VitePressCrawler(url, **kwargs)
         case SiteType.DOCSIFY:
             return DocsifyCrawler(url, **kwargs)
+        case SiteType.MINTLIFY:
+            return MintlifyCrawler(url, **kwargs)
         case _:
             return GenericCrawler(url, **kwargs)
 
 
-__all__ = ["make_crawler", "BaseCrawler", "VitePressCrawler", "DocsifyCrawler", "GenericCrawler"]
+__all__ = ["make_crawler", "BaseCrawler", "VitePressCrawler", "DocsifyCrawler", "MintlifyCrawler", "GenericCrawler"]

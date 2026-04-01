@@ -1,6 +1,8 @@
 """Detect the type of documentation site from its HTML."""
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 import httpx
 from bs4 import BeautifulSoup
 
@@ -8,12 +10,17 @@ from .models import SiteType
 
 
 async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
-    """Fetch the root page and infer whether it is VitePress, Docsify, or generic."""
+    """Fetch the root page and infer whether it is VitePress, Docsify, Mintlify, or generic."""
     try:
         resp = await client.get(url, follow_redirects=True)
         resp.raise_for_status()
     except httpx.HTTPError:
         return SiteType.GENERIC
+
+    # ── Mintlify ───────────────────────────────────────────────────────────────
+    # Mintlify sets an x-llms-txt response header and a Link rel=llms-txt header.
+    if "x-llms-txt" in resp.headers or "llms-txt" in resp.headers.get("link", ""):
+        return SiteType.MINTLIFY
 
     html = resp.text
     soup = BeautifulSoup(html, "lxml")
@@ -42,5 +49,14 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
         inline = script.string or ""
         if "$docsify" in inline or "window.$docsify" in inline:
             return SiteType.DOCSIFY
+
+    # ── Mintlify (HTML fallback) ───────────────────────────────────────────────
+    # Check for mintlify-assets script paths or powered-by footer link
+    for tag in soup.find_all(["script", "a"]):
+        src = tag.get("src") or tag.get("href") or ""
+        if "mintlify" in src.lower():
+            return SiteType.MINTLIFY
+    for el in soup.select("a[href*='mintlify.com']"):
+        return SiteType.MINTLIFY
 
     return SiteType.GENERIC
