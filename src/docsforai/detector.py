@@ -1,6 +1,8 @@
 """Detect the type of documentation site from its HTML."""
 from __future__ import annotations
 
+import asyncio
+import shutil
 from urllib.parse import urlparse
 
 import httpx
@@ -8,28 +10,58 @@ from bs4 import BeautifulSoup
 
 from .models import SiteType
 
+_CURL_BIN: str | None = shutil.which("curl")
+
+
+async def _fetch_with_curl(url: str, timeout: float = 30.0) -> str | None:
+    """Fallback: fetch *url* via system ``curl`` when httpx is blocked."""
+    if not _CURL_BIN:
+        return None
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            _CURL_BIN, "-sL", "--max-time", str(int(timeout)), url,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        stdout, _ = await proc.communicate()
+        if proc.returncode == 0 and stdout:
+            return stdout.decode("utf-8", errors="replace")
+    except Exception:
+        pass
+    return None
+
 
 async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
     """Fetch the root page and infer whether it is VitePress, Docsify, Mintlify, Feishu, or generic."""
     # ── Feishu Open Platform ───────────────────────────────────────────────────
-    # Detect by hostname before even fetching, to avoid React SPA noise.
     from urllib.parse import urlparse as _urlparse
     _host = _urlparse(url).netloc.lower()
     if _host in ("open.feishu.cn", "open.larkoffice.com"):
         return SiteType.FEISHU_DOCS
 
+    html: str | None = None
+    resp_headers: dict[str, str] = {}
+
     try:
         resp = await client.get(url, follow_redirects=True)
-        resp.raise_for_status()
+        resp_headers = dict(resp.headers)
+        if resp.status_code == 403 and "challenge" in resp.headers.get("cf-mitigated", ""):
+            # Cloudflare JS challenge — fall back to system curl
+            html = await _fetch_with_curl(url)
+        else:
+            resp.raise_for_status()
+            html = resp.text
     except httpx.HTTPError:
+        # Last resort: try curl
+        html = await _fetch_with_curl(url)
+
+    if not html:
         return SiteType.GENERIC
 
     # ── Mintlify ───────────────────────────────────────────────────────────────
-    # Mintlify sets an x-llms-txt response header and a Link rel=llms-txt header.
-    if "x-llms-txt" in resp.headers or "llms-txt" in resp.headers.get("link", ""):
+    if "x-llms-txt" in resp_headers or "llms-txt" in resp_headers.get("link", ""):
         return SiteType.MINTLIFY
 
-    html = resp.text
     soup = BeautifulSoup(html, "lxml")
 
     # ── VitePress ──────────────────────────────────────────────────────────────

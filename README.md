@@ -92,7 +92,8 @@ docsforai crawl https://example.com/docs --type vitepress
 - 直接解析服务端渲染的 `nav.md-nav--primary` 侧边栏，完整还原章节树与面包屑层级，无需 JavaScript。
 - 同时支持 `.html` 扩展名（如 ReadTheDocs）和目录风格 URL（如 `concepts/models/`）。
 - 提取 `article.md-content__inner` 内容区，自动剔除侧边栏、页脚等噪音。
-- 测试：已对 `https://docs.pydantic.dev/latest/` 运行爬虫，采集到 88 页。
+- 内置 Cloudflare 反爬绕过：当 httpx 被 Cloudflare JS Challenge 拦截时，自动回退到系统 `curl`（无需额外依赖）。
+- 测试：已对 `https://scrapling.readthedocs.io/en/latest/`（Cloudflare 保护）采集到 33 页，`https://docs.pydantic.dev/latest/` 采集到 88 页。
 
 ### Feishu (飞书开放平台)
 - 专用爬虫：通过飞书开放平台暴露的内部 API 拉取完整的目录树和原始 Markdown（`/document/<fullpath>.md`）。
