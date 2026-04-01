@@ -48,31 +48,41 @@ class MintlifyCrawler(BaseCrawler):
         async with self._make_client() as client:
             site_title = await self._get_site_title(client, base)
 
-            # ── Strategy 1: llms-full.txt (one request, all content) ──────────
-            full_url = urljoin(base + "/", "llms-full.txt")
-            full_text = await self._fetch(client, full_url)
-            if full_text and _FULL_SECTION.search(full_text):
-                pages = self._parse_full_txt(full_text)
-                return DocSite(
-                    title=site_title,
-                    base_url=base,
-                    site_type=SiteType.MINTLIFY,
-                    pages=pages,
-                )
+            # Build candidate base URLs to search for llms.txt / llms-full.txt.
+            # For docs hosted at a sub-path (e.g. example.com/docs) the files
+            # live at that sub-path, not the domain root.  Try both.
+            candidates = list(dict.fromkeys([
+                self._url_dir(self.start_url),  # e.g. https://example.com/docs
+                base,                           # e.g. https://example.com
+            ]))
 
-            # ── Strategy 2: llms.txt index + individual .md fetches ───────────
-            index_url = urljoin(base + "/", "llms.txt")
-            index_text = await self._fetch(client, index_url)
-            if index_text:
-                flat = self._parse_llms_txt(index_text)
-                if flat:
-                    pages = await self._crawl_all(client, flat)
+            # ── Strategy 1: llms-full.txt (one request, all content) ──────────
+            for candidate in candidates:
+                full_url = urljoin(candidate.rstrip("/") + "/", "llms-full.txt")
+                full_text = await self._fetch(client, full_url)
+                if full_text and _FULL_SECTION.search(full_text):
+                    pages = self._parse_full_txt(full_text)
                     return DocSite(
                         title=site_title,
                         base_url=base,
                         site_type=SiteType.MINTLIFY,
                         pages=pages,
                     )
+
+            # ── Strategy 2: llms.txt index + individual .md fetches ───────────
+            for candidate in candidates:
+                index_url = urljoin(candidate.rstrip("/") + "/", "llms.txt")
+                index_text = await self._fetch(client, index_url)
+                if index_text:
+                    flat = self._parse_llms_txt(index_text)
+                    if flat:
+                        pages = await self._crawl_all(client, flat)
+                        return DocSite(
+                            title=site_title,
+                            base_url=base,
+                            site_type=SiteType.MINTLIFY,
+                            pages=pages,
+                        )
 
         # ── Strategy 3: give up and return empty (caller falls back to generic) ─
         return DocSite(
@@ -91,6 +101,13 @@ class MintlifyCrawler(BaseCrawler):
         """Strip path, keep scheme + host."""
         p = urlparse(url)
         return f"{p.scheme}://{p.netloc}"
+
+    @staticmethod
+    def _url_dir(url: str) -> str:
+        """Return the directory portion of a URL (scheme + host + path, no trailing slash on leaf)."""
+        p = urlparse(url)
+        path = p.path.rstrip("/")
+        return f"{p.scheme}://{p.netloc}{path}"
 
     async def _get_site_title(self, client: httpx.AsyncClient, base: str) -> str:
         """Parse site title from llms.txt first line (# SiteName) or <title> tag."""
