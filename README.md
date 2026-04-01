@@ -151,7 +151,7 @@ Arguments:
 Options:
   -o, --output   PATH    输出目录 [default: ./output]
   -f, --format   FORMAT  导出格式，可重复使用 (multi-md|single-md|jsonl)
-  -t, --type     TYPE    强制站点类型 (vitepress|docsify|mintlify|generic)
+  -t, --type     TYPE    强制站点类型 (vitepress|docsify|mintlify|feishu-docs|docusaurus|mdbook|mkdocs|starlight|generic)
   --concurrency  INT     最大并发请求数 [default: 5]
   --delay        FLOAT   请求间隔秒数 [default: 0.1]
   --timeout      FLOAT   HTTP 超时秒数 [default: 30.0]
@@ -174,6 +174,11 @@ src/docsforai/
 │   ├── vitepress.py    # VitePress 专用爬虫
 │   ├── docsify.py      # Docsify 专用爬虫（直取 .md 源文件）
 │   ├── mintlify.py     # Mintlify 专用爬虫（llms-full.txt / llms.txt）
+│   ├── docusaurus.py   # Docusaurus 专用爬虫
+│   ├── mdbook.py       # mdBook 专用爬虫（静态 toc.html）
+│   ├── mkdocs.py       # MkDocs 专用爬虫（Material + 默认主题）
+│   ├── starlight.py    # Starlight/Astro 专用爬虫
+│   ├── feishu.py       # 飞书开放平台专用爬虫
 │   └── generic.py      # 通用 BFS 兜底爬虫
 └── exporters/
     ├── multi_md.py     # 多 MD 文件导出
