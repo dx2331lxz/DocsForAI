@@ -87,6 +87,13 @@ docsforai crawl https://example.com/docs --type vitepress
 - 提取 `#mdbook-content main` 内容区，自动清除上下翻页按钮等导航噪音。
 - 测试：已对 `https://rust-lang.github.io/mdBook/` 运行爬虫，采集到 31 页。
 
+### MkDocs（含 Material 主题）
+- 自动识别 MkDocs / Material theme（通过 `generator` meta 标签或 `.md-nav--primary` 等特征 CSS 类）。
+- 直接解析服务端渲染的 `nav.md-nav--primary` 侧边栏，完整还原章节树与面包屑层级，无需 JavaScript。
+- 同时支持 `.html` 扩展名（如 ReadTheDocs）和目录风格 URL（如 `concepts/models/`）。
+- 提取 `article.md-content__inner` 内容区，自动剔除侧边栏、页脚等噪音。
+- 测试：已对 `https://docs.pydantic.dev/latest/` 运行爬虫，采集到 88 页。
+
 ### Feishu (飞书开放平台)
 - 专用爬虫：通过飞书开放平台暴露的内部 API 拉取完整的目录树和原始 Markdown（`/document/<fullpath>.md`）。
 - 优点：一次性读取目录树并并发下载所有 `.md`，内容干净且保留原始 Markdown 结构。

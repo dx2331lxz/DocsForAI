@@ -12,6 +12,7 @@ class SiteType(str, Enum):
     FEISHU_DOCS = "feishu-docs"
     DOCUSAURUS = "docusaurus"
     MDBOOK = "mdbook"
+    MKDOCS = "mkdocs"
     GENERIC = "generic"
 
 
