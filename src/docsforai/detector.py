@@ -48,8 +48,22 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
         if "vitepress" in src.lower() or "/.vitepress/" in src:
             return SiteType.VITEPRESS
 
+    # ── mdBook ─────────────────────────────────────────────────────────────────
+    # 1. Characteristic element: <nav id="mdbook-sidebar"> or <ol class="chapter">
+    if soup.select("#mdbook-sidebar, ol.chapter, .mdbook-version"):
+        return SiteType.MDBOOK
+
+    # 2. Asset URLs containing "mdbook"
+    for tag in soup.find_all(["script", "link"]):
+        src = tag.get("src") or tag.get("href") or ""
+        if "mdbook" in src.lower():
+            return SiteType.MDBOOK
+
+    # 3. Characteristic CSS id/class used by mdBook's default theme
+    if soup.select("#mdbook-content, #mdbook-body-container"):
+        return SiteType.MDBOOK
+
     # ── Docusaurus ─────────────────────────────────────────────────────────────
-    # 1. <meta name="generator" content="Docusaurus ...">
     if generator and "docusaurus" in (generator.get("content") or "").lower():
         return SiteType.DOCUSAURUS
 

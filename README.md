@@ -82,6 +82,11 @@ docsforai crawl https://example.com/docs --type vitepress
 - Docusaurus 是一个常见的文档框架；DocsForAI 当前通过 `docusaurus` 爬虫兼容 Docusaurus 网站。
 - 测试：已对 `https://docusaurus.io/docs` 运行爬虫（`docsforai crawl https://docusaurus.io/docs -o ./output_docusaurus`），采集到 92 页并写入 `output_docusaurus/multi-md/`。
 
+### mdBook
+- 通过静态 `toc.html`（noscript fallback）解析完整有序章节树，无需依赖 JavaScript 渲染。
+- 提取 `#mdbook-content main` 内容区，自动清除上下翻页按钮等导航噪音。
+- 测试：已对 `https://rust-lang.github.io/mdBook/` 运行爬虫，采集到 31 页。
+
 ### Feishu (飞书开放平台)
 - 专用爬虫：通过飞书开放平台暴露的内部 API 拉取完整的目录树和原始 Markdown（`/document/<fullpath>.md`）。
 - 优点：一次性读取目录树并并发下载所有 `.md`，内容干净且保留原始 Markdown 结构。

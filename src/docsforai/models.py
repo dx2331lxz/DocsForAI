@@ -11,6 +11,7 @@ class SiteType(str, Enum):
     MINTLIFY = "mintlify"
     FEISHU_DOCS = "feishu-docs"
     DOCUSAURUS = "docusaurus"
+    MDBOOK = "mdbook"
     GENERIC = "generic"
 
 
