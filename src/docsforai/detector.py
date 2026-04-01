@@ -48,6 +48,25 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
         if "vitepress" in src.lower() or "/.vitepress/" in src:
             return SiteType.VITEPRESS
 
+    # ── Docusaurus ─────────────────────────────────────────────────────────────
+    # 1. <meta name="generator" content="Docusaurus ...">
+    if generator and "docusaurus" in (generator.get("content") or "").lower():
+        return SiteType.DOCUSAURUS
+
+    # 2. Characteristic CSS classes rendered by Docusaurus
+    if soup.select(".navbar__brand, .theme-doc-sidebar-container, .menu__list, .docusaurus-mt-lg"):
+        return SiteType.DOCUSAURUS
+
+    # 3. Asset URLs or inline markers containing docusaurus
+    for tag in soup.find_all(["script", "link"]):
+        src = tag.get("src") or tag.get("href") or ""
+        if "docusaurus" in src.lower():
+            return SiteType.DOCUSAURUS
+    for script in soup.find_all("script"):
+        inline = script.string or ""
+        if "docusaurus" in inline.lower():
+            return SiteType.DOCUSAURUS
+
     # ── Docsify ────────────────────────────────────────────────────────────────
     for script in soup.find_all("script"):
         src = script.get("src") or ""

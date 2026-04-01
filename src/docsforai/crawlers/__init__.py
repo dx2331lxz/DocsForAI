@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from ..models import SiteType
 from .base import BaseCrawler
+from .docusaurus import DocusaurusCrawler
 from .docsify import DocsifyCrawler
 from .feishu import FeishuDocsCrawler
 from .generic import GenericCrawler
@@ -21,9 +22,11 @@ def make_crawler(site_type: SiteType, url: str, **kwargs) -> BaseCrawler:
             return MintlifyCrawler(url, **kwargs)
         case SiteType.FEISHU_DOCS:
             return FeishuDocsCrawler(url, **kwargs)
+        case SiteType.DOCUSAURUS:
+            return DocusaurusCrawler(url, **kwargs)
         case _:
             return GenericCrawler(url, **kwargs)
 
 
 __all__ = ["make_crawler", "BaseCrawler", "VitePressCrawler", "DocsifyCrawler",
-           "MintlifyCrawler", "FeishuDocsCrawler", "GenericCrawler"]
+           "MintlifyCrawler", "FeishuDocsCrawler", "DocusaurusCrawler", "GenericCrawler"]
