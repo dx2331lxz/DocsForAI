@@ -13,6 +13,7 @@ class SiteType(str, Enum):
     DOCUSAURUS = "docusaurus"
     MDBOOK = "mdbook"
     MKDOCS = "mkdocs"
+    STARLIGHT = "starlight"
     GENERIC = "generic"
 
 

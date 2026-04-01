@@ -80,6 +80,11 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
         if "vitepress" in src.lower() or "/.vitepress/" in src:
             return SiteType.VITEPRESS
 
+    # ── Starlight (Astro) ──────────────────────────────────────────────────────
+    # Starlight injects unique IDs and classes no other framework uses.
+    if soup.select("#starlight__sidebar, #starlight__search, .sl-markdown-content"):
+        return SiteType.STARLIGHT
+
     # ── mdBook ─────────────────────────────────────────────────────────────────
     # 1. Characteristic element: <nav id="mdbook-sidebar"> or <ol class="chapter">
     if soup.select("#mdbook-sidebar, ol.chapter, .mdbook-version"):

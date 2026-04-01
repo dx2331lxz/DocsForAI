@@ -87,6 +87,12 @@ docsforai crawl https://example.com/docs --type vitepress
 - 提取 `#mdbook-content main` 内容区，自动清除上下翻页按钮等导航噪音。
 - 测试：已对 `https://rust-lang.github.io/mdBook/` 运行爬虫，采集到 31 页。
 
+### Starlight（Astro）
+- 通过 `#starlight__sidebar`、`#starlight__search`、`.sl-markdown-content` 自动识别
+- 解析 `nav.sidebar` 中 `<details>/<summary>` 分组结构，完整还原侧边栏章节层级
+- 提取 `[data-pagefind-body]` 内容区，自动剔除右侧目录、编辑链接、上下翻页等噪音
+- 测试：`https://starlight.astro.build/` 采集 35 页
+
 ### MkDocs（含 Material 主题与内置默认主题）
 - 自动识别 MkDocs 所有主题变体：
   - **Material 主题**：通过 `generator` meta 标签（`zensical`/`mkdocs`）或 `.md-nav--primary` CSS 类识别
