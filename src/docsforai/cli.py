@@ -19,7 +19,12 @@ from .models import ExportFormat, SiteType
 
 app = typer.Typer(
     name="docsforai",
-    help="Specialized documentation-site crawler, optimised for AI consumption.",
+    help=(
+        "Specialized documentation-site crawler optimised for AI consumption.\n\n"
+        "Automatically detects the documentation framework (VitePress, Docsify, GitBook, "
+        "MkDocs, Docusaurus, mdBook, Starlight, Mintlify, Feishu, or generic) and exports "
+        "clean Markdown / JSONL output ready for LLMs and vector databases."
+    ),
     add_completion=False,
     rich_markup_mode="rich",
 )
@@ -43,31 +48,89 @@ def _global(
     pass
 
 
-@app.command()
+_CRAWL_EPILOG = (
+    "[bold cyan]Examples[/bold cyan]\n\n"
+    "  [dim]# Basic crawl — auto-detect framework, output as separate MD files[/dim]\n"
+    "  docsforai crawl https://vitepress.dev/guide -o ./output\n\n"
+    "  [dim]# Single merged file — paste directly into an LLM context[/dim]\n"
+    "  docsforai crawl https://vitepress.dev/guide [yellow]-f single-md[/yellow] -o ./output\n\n"
+    "  [dim]# JSONL — ingest into a vector database or fine-tuning dataset[/dim]\n"
+    "  docsforai crawl https://docsify.js.org [yellow]-f jsonl[/yellow] -o ./output\n\n"
+    "  [dim]# Multiple formats at once[/dim]\n"
+    "  docsforai crawl https://vitepress.dev/guide [yellow]-f multi-md -f jsonl[/yellow] -o ./output\n\n"
+    "  [dim]# Force framework type (useful when auto-detection fails)[/dim]\n"
+    "  docsforai crawl https://example.com/docs [yellow]--type mkdocs[/yellow]\n\n"
+    "  [dim]# Crawl a GitBook site with higher concurrency[/dim]\n"
+    "  docsforai crawl https://agpt.co/docs [yellow]--concurrency 10[/yellow] -o ./output\n\n"
+    "  [dim]# Generic BFS crawl capped at 50 pages[/dim]\n"
+    "  docsforai crawl https://example.com/docs [yellow]--type generic --max-pages 50[/yellow]"
+)
+
+
+@app.command(epilog=_CRAWL_EPILOG)
 def crawl(
-    url: Annotated[str, typer.Argument(help="URL of the documentation site to crawl.")],
+    url: Annotated[
+        str,
+        typer.Argument(
+            help="URL of the documentation site to crawl. Any page on the site works; the root or docs index is recommended."
+        ),
+    ],
     output: Annotated[
         Path,
-        typer.Option("--output", "-o", help="Output directory.", show_default=True),
+        typer.Option(
+            "--output", "-o",
+            help="Directory where output files will be written.",
+            show_default=True,
+        ),
     ] = Path("./output"),
     fmt: Annotated[
         list[ExportFormat],
         typer.Option(
             "--format", "-f",
-            help="Export format (repeatable). Choices: multi-md · single-md · jsonl",
+            help=(
+                "Export format. Repeat the flag to produce multiple formats simultaneously.\n\n"
+                "  [green]multi-md[/green]  — one .md file per page, preserving the original directory structure (default)\n"
+                "  [green]single-md[/green] — all pages merged into one .md file, ordered by nav\n"
+                "  [green]jsonl[/green]     — one JSON record per line, suitable for vector DBs and fine-tuning"
+            ),
             show_default=True,
         ),
     ] = [ExportFormat.MULTI_MD],  # noqa: B006
     site_type: Annotated[
         Optional[SiteType],
-        typer.Option("--type", "-t", help="Force a specific site type (skip auto-detection)."),
+        typer.Option(
+            "--type", "-t",
+            help=(
+                "Force a specific framework and skip auto-detection.\n\n"
+                "Auto-detection works for most sites. Use this flag only when the detected\n"
+                "type is wrong or the site uses an unusual configuration.\n\n"
+                "Supported values: vitepress · docsify · mintlify · feishu-docs ·\n"
+                "docusaurus · mdbook · mkdocs · starlight · gitbook · generic"
+            ),
+        ),
     ] = None,
-    concurrency: Annotated[int, typer.Option(help="Max concurrent HTTP requests.")] = 5,
-    delay: Annotated[float, typer.Option(help="Seconds to wait between requests.")] = 0.1,
-    timeout: Annotated[float, typer.Option(help="HTTP request timeout in seconds.")] = 30.0,
-    max_pages: Annotated[int, typer.Option(help="Max pages to crawl (generic mode only).")] = 200,
+    concurrency: Annotated[
+        int,
+        typer.Option(help="Maximum number of pages fetched in parallel. Raise for faster crawls, lower to be polite."),
+    ] = 5,
+    delay: Annotated[
+        float,
+        typer.Option(help="Seconds to sleep between requests (per worker). Increase to avoid rate-limiting."),
+    ] = 0.1,
+    timeout: Annotated[
+        float,
+        typer.Option(help="HTTP request timeout in seconds. Increase for slow or large documentation sites."),
+    ] = 30.0,
+    max_pages: Annotated[
+        int,
+        typer.Option(help="Maximum pages to collect. Only applied when --type generic is used."),
+    ] = 200,
 ) -> None:
-    """Crawl a documentation site and export it for AI consumption."""
+    """Crawl a documentation site and export clean Markdown / JSONL for AI use.
+
+    The framework is detected automatically from the page HTML.
+    Supported: VitePress · Docsify · Mintlify · GitBook · MkDocs · Docusaurus · mdBook · Starlight · Feishu · Generic
+    """
     asyncio.run(
         _run_crawl(url, output, fmt, site_type, concurrency, delay, timeout, max_pages)
     )
