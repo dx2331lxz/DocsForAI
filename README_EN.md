@@ -100,18 +100,18 @@ Done! Output → ./output
 
 All frameworks are detected automatically — no configuration needed:
 
-| Framework | Detection signals | Core strategy | Tested on (pages) |
-|-----------|-------------------|---------------|-------------------|
-| **VitePress** | `.VPSidebar` CSS class / generator meta | Parse sidebar JSON; extract `.vp-doc` | vitepress.dev |
-| **Docsify** | `$docsify` global variable | Fetch raw `.md` source files directly, skip HTML rendering | docsify.js.org |
-| **Mintlify** | `x-llms-txt` response header | Read `llms-full.txt` in one request for all content | mintlify.com/docs |
-| **Docusaurus** | generator meta / `.theme-doc-sidebar-container` | Parse sidebar; extract main content | docusaurus.io/docs (92) |
-| **mdBook** | `#mdbook-sidebar` / `ol.chapter` | Parse static `toc.html` for the full ordered chapter tree | rust-lang.github.io/mdBook (31) |
-| **MkDocs** | generator meta / `.md-nav--primary` / `#toc-collapse` | Material & default theme support; Cloudflare bypass built-in | docs.pydantic.dev (88) |
-| **Starlight** | `#starlight__sidebar` / `.sl-markdown-content` | Parse `<details>/<summary>` grouped nav; extract `[data-pagefind-body]` | starlight.astro.build (35) |
-| **GitBook** | generator meta `GitBook` / `gitbook.com` scripts | Discover all pages via `sitemap.xml`; remove heading anchor icons and SVG noise | agpt.co/docs (174) |
-| **Feishu Docs** | Domain `open.feishu.cn` | Call Feishu internal API to fetch the full directory tree and raw Markdown | Feishu Open Platform |
-| **Generic** | Fallback for all other sites | BFS crawl of same-domain links; heuristic main-content detection | Any docs site |
+| Framework       | Detection signals                                     | Core strategy                                                                   | Tested on (pages)               |
+| --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------- |
+| **VitePress**   | `.VPSidebar` CSS class / generator meta               | Parse sidebar JSON; extract `.vp-doc`                                           | vitepress.dev                   |
+| **Docsify**     | `$docsify` global variable                            | Fetch raw `.md` source files directly, skip HTML rendering                      | docsify.js.org                  |
+| **Mintlify**    | `x-llms-txt` response header                          | Read `llms-full.txt` in one request for all content                             | mintlify.com/docs               |
+| **Docusaurus**  | generator meta / `.theme-doc-sidebar-container`       | Parse sidebar; extract main content                                             | docusaurus.io/docs (92)         |
+| **mdBook**      | `#mdbook-sidebar` / `ol.chapter`                      | Parse static `toc.html` for the full ordered chapter tree                       | rust-lang.github.io/mdBook (31) |
+| **MkDocs**      | generator meta / `.md-nav--primary` / `#toc-collapse` | Material & default theme support; Cloudflare bypass built-in                    | docs.pydantic.dev (88)          |
+| **Starlight**   | `#starlight__sidebar` / `.sl-markdown-content`        | Parse `<details>/<summary>` grouped nav; extract `[data-pagefind-body]`         | starlight.astro.build (35)      |
+| **GitBook**     | generator meta `GitBook` / `gitbook.com` scripts      | Discover all pages via `sitemap.xml`; remove heading anchor icons and SVG noise | agpt.co/docs (174)              |
+| **Feishu Docs** | Domain `open.feishu.cn`                               | Call Feishu internal API to fetch the full directory tree and raw Markdown      | Feishu Open Platform            |
+| **Generic**     | Fallback for all other sites                          | BFS crawl of same-domain links; heuristic main-content detection                | Any docs site                   |
 
 > Don't see the framework you need? Open an [Issue](https://github.com/dx2331lxz/DocsForAI/issues) or submit a PR.
 
@@ -235,14 +235,14 @@ docsforai crawl https://example.com/docs --type generic --max-pages 50
 
 Generic crawlers treat every site the same. Popular documentation frameworks have well-defined structural conventions that can be exploited directly:
 
-| Scenario | Generic crawler | DocsForAI |
-|----------|-----------------|-----------|
-| Navigation hierarchy | ❌ Must guess | ✅ Reads sidebar structure directly |
-| Docsify raw content | ❌ Parses rendered HTML | ✅ Fetches `.md` source files |
-| Mintlify full content | ❌ Crawls page by page | ✅ One request reads `llms-full.txt` |
-| Code block language tags | ❌ Often lost | ✅ Preserved via `language-*` class names |
-| Cloudflare-protected sites | ❌ Fails with 403 | ✅ Falls back to system `curl` automatically |
-| Output formats | ❌ Usually one | ✅ multi-md / single-md / jsonl |
+| Scenario                   | Generic crawler        | DocsForAI                                   |
+| -------------------------- | ---------------------- | ------------------------------------------- |
+| Navigation hierarchy       | ❌ Must guess           | ✅ Reads sidebar structure directly          |
+| Docsify raw content        | ❌ Parses rendered HTML | ✅ Fetches `.md` source files                |
+| Mintlify full content      | ❌ Crawls page by page  | ✅ One request reads `llms-full.txt`         |
+| Code block language tags   | ❌ Often lost           | ✅ Preserved via `language-*` class names    |
+| Cloudflare-protected sites | ❌ Fails with 403       | ✅ Falls back to system `curl` automatically |
+| Output formats             | ❌ Usually one          | ✅ multi-md / single-md / jsonl              |
 
 ---
 
