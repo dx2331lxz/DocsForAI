@@ -91,7 +91,8 @@ After the crawl, the terminal shows a summary:
 │ Pages collected │     174 │
 │ Files written   │     174 │
 └─────────────────┴─────────┘
-Done! Output → ./output
+  Output    : ./output/autogpt
+Done!
 ```
 
 ---
@@ -122,9 +123,10 @@ All frameworks are detected automatically — no configuration needed:
 ### multi-md (default)
 
 One `.md` file per page, mirroring the original site's directory structure. Best for RAG pipelines and per-chapter management.
+When you pass `-o ./output`, files are written directly to `./output/<site-name>/` without creating an extra `multi-md/` directory.
 
 ```
-output/multi-md/
+output/vitepress/
 ├── guide/
 │   ├── getting-started.md
 │   └── configuration.md
@@ -149,10 +151,12 @@ order: 3
 ### single-md
 
 All pages merged into one file in navigation order. Best for pasting directly into an LLM chat context.
+When you pass `-o ./output`, the output file is `./output/<site-name>.md`.
 
 ### jsonl
 
 One JSON record per line. Best for bulk import into vector databases or building fine-tuning datasets.
+When you pass `-o ./output`, the output file is `./output/<site-name>.jsonl`.
 
 ```json
 {"source": "https://...", "title": "Getting Started", "breadcrumb": ["Guide", "Getting Started"], "content": "# Getting Started\n...", "site": "VitePress", "site_type": "vitepress"}
@@ -170,14 +174,17 @@ Arguments:
                          Any page works; the root or docs index is recommended.
 
 Options:
-  -o, --output   PATH    Directory where output files will be written.
+  -o, --output   PATH    Base output directory.
+                         multi-md  -> <output>/<site-name>/
+                         single-md -> <output>/<site-name>.md
+                         jsonl     -> <output>/<site-name>.jsonl
                          [default: ./output]
 
   -f, --format   FORMAT  Export format. Repeat to produce multiple formats.
                          Choices:
-                           multi-md  — one .md per page (default)
-                           single-md — all pages merged into one .md
-                           jsonl     — one JSON record per line
+                           multi-md  — one .md per page under <output>/<site-name>/ (default)
+                           single-md — all pages merged into <output>/<site-name>.md
+                           jsonl     — one JSON record per line in <output>/<site-name>.jsonl
 
   -t, --type     TYPE    Force a framework type and skip auto-detection.
                          Useful when auto-detection is incorrect.

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import sys
 from pathlib import Path
 from typing import Annotated, Optional
@@ -30,6 +31,14 @@ app = typer.Typer(
 )
 console = Console()
 err_console = Console(stderr=True)
+
+
+def _site_slug(title: str) -> str:
+    """Convert a site title to a filesystem-safe slug."""
+    slug = title.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_-]+", "-", slug)
+    return slug.strip("-") or "docs"
 
 
 def _version_callback(value: bool) -> None:
@@ -79,7 +88,12 @@ def crawl(
         Path,
         typer.Option(
             "--output", "-o",
-            help="Directory where output files will be written.",
+            help=(
+                "Base directory where output files will be written.\n\n"
+                "  [green]multi-md[/green]  — writes to <output>/<site-name>/...\n"
+                "  [green]single-md[/green] — writes <output>/<site-name>.md\n"
+                "  [green]jsonl[/green]     — writes <output>/<site-name>.jsonl"
+            ),
             show_default=True,
         ),
     ] = Path("./output"),
@@ -89,9 +103,9 @@ def crawl(
             "--format", "-f",
             help=(
                 "Export format. Repeat the flag to produce multiple formats simultaneously.\n\n"
-                "  [green]multi-md[/green]  — one .md file per page, preserving the original directory structure (default)\n"
-                "  [green]single-md[/green] — all pages merged into one .md file, ordered by nav\n"
-                "  [green]jsonl[/green]     — one JSON record per line, suitable for vector DBs and fine-tuning"
+                "  [green]multi-md[/green]  — one .md file per page under <output>/<site-name>/ (default)\n"
+                "  [green]single-md[/green] — all pages merged into <output>/<site-name>.md\n"
+                "  [green]jsonl[/green]     — one JSON record per line in <output>/<site-name>.jsonl"
             ),
             show_default=True,
         ),
@@ -182,9 +196,22 @@ async def _run_crawl(
 
     # ── Export ─────────────────────────────────────────────────────────────────
     all_written: list[Path] = []
+    destinations: list[Path] = []
+    site_slug = _site_slug(site.title)
     for fmt in formats:
-        written = export(site, output / fmt.value, fmt)
+        if fmt == ExportFormat.MULTI_MD:
+            target = output / site_slug
+            destination = target
+        elif fmt == ExportFormat.SINGLE_MD:
+            target = output
+            destination = output / f"{site_slug}.md"
+        else:
+            target = output
+            destination = output / f"{site_slug}.jsonl"
+
+        written = export(site, target, fmt)
         all_written.extend(written)
+        destinations.append(destination)
 
     # ── Summary ────────────────────────────────────────────────────────────────
     table = Table(title="Crawl summary", show_header=True, header_style="bold magenta")
@@ -195,4 +222,6 @@ async def _run_crawl(
     table.add_row("Pages collected", str(len(site.pages)))
     table.add_row("Files written", str(len(all_written)))
     console.print(table)
-    console.print(f"\n[bold green]Done![/] Output → {output}")
+    for destination in destinations:
+        console.print(f"  Output    : {destination}")
+    console.print("\n[bold green]Done![/]")

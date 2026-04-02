@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docsforai"
-version = "0.4.5"
+version = "0.5.0"
 description = "Specialized documentation website crawler optimized for AI consumption"
 readme = "README.md"
 requires-python = ">=3.10"

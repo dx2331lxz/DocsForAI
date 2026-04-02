@@ -96,7 +96,8 @@ docsforai crawl https://example.com/docs --type vitepress
 │ Pages collected │     174 │
 │ Files written   │     174 │
 └─────────────────┴─────────┘
-Done! Output → ./output
+  Output    : ./output/autogpt
+Done!
 ```
 
 ---
@@ -127,9 +128,10 @@ DocsForAI 内置如下专用爬虫，全部自动识别，无需配置：
 ### multi-md（默认）
 
 每个页面输出为独立的 `.md` 文件，目录结构与原站保持一致。适合 RAG 检索和按章节管理。
+当你指定 `-o ./output` 时，会直接写入 `./output/<site-name>/`，不会再额外创建 `multi-md/` 目录。
 
 ```
-output/multi-md/
+output/vitepress/
 ├── guide/
 │   ├── getting-started.md
 │   └── configuration.md
@@ -154,10 +156,12 @@ order: 3
 ### single-md
 
 所有页面按章节顺序合并为一个文件，适合直接粘贴到 LLM 对话上下文。
+当你指定 `-o ./output` 时，输出文件为 `./output/<site-name>.md`。
 
 ### jsonl
 
 每行一条 JSON 记录，适合向量数据库批量导入或微调数据集构建。
+当你指定 `-o ./output` 时，输出文件为 `./output/<site-name>.jsonl`。
 
 ```json
 {"source": "https://...", "title": "Getting Started", "breadcrumb": ["Guide", "Getting Started"], "content": "# Getting Started\n...", "site": "VitePress", "site_type": "vitepress"}
@@ -174,9 +178,13 @@ docsforai crawl [OPTIONS] URL
   URL                    目标文档站点 URL（推荐使用首页或文档根路径）
 
 选项：
-  -o, --output   PATH    输出目录 [默认: ./output]
+    -o, --output   PATH    输出根目录 [默认: ./output]
+                           multi-md -> <output>/<site-name>/
+                           single-md -> <output>/<site-name>.md
+                           jsonl -> <output>/<site-name>.jsonl
   -f, --format   FORMAT  导出格式，可重复使用以同时输出多种格式
-                         可选值: multi-md | single-md | jsonl  [默认: multi-md]
+                           可选值: multi-md | single-md | jsonl  [默认: multi-md]
+                           multi-md 会直接输出到 <output>/<site-name>/
   -t, --type     TYPE    强制指定框架类型，跳过自动检测
                          可选值: vitepress | docsify | mintlify | feishu-docs |
                                  docusaurus | mdbook | mkdocs | starlight |
