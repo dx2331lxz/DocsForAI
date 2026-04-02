@@ -1,5 +1,7 @@
 # DocsForAI
 
+![DocsForAI Banner](assets/docsforai-banner.png)
+
 > **专为文档网站设计的轻量爬虫，让 AI 可以高质量地阅读任何文档。**
 
 [![PyPI version](https://img.shields.io/pypi/v/docsforai.svg)](https://pypi.org/project/docsforai/)
@@ -8,7 +10,7 @@
 
 **中文** | [English](README_EN.md)
 
-![Demo](assets/demo-1panel.gif)
+![1Panel Demo](assets/demo-1panel.gif)
 
 DocsForAI 是一个针对常见文档框架深度优化的爬虫工具。它能自动识别 VitePress、Docsify、GitBook 等多种文档站点，按章节结构提取干净的 Markdown 内容，直接输出给 LLM 或向量数据库使用。
 

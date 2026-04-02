@@ -1,5 +1,7 @@
 # DocsForAI
 
+![DocsForAI Banner](assets/docsforai-banner.png)
+
 > **A lightweight documentation crawler optimised for AI consumption.**
 
 [![PyPI version](https://img.shields.io/pypi/v/docsforai.svg)](https://pypi.org/project/docsforai/)
@@ -8,7 +10,7 @@
 
 [中文](README.md) | **English**
 
-![Demo](assets/demo-1panel.gif)
+![1Panel Demo](assets/demo-1panel.gif)
 
 DocsForAI automatically detects the documentation framework of any site, extracts clean Markdown content structured by section, and outputs it in formats ready for LLMs and vector databases.
 
