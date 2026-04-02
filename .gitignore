@@ -26,6 +26,11 @@ htmlcov/
 # Crawler output (sample data, not part of the source)
 output/
 
+# Temporary probe / debug scripts
+_probe_*.py
+_test_*.py
+_debug_*.py
+
 # OS
 .DS_Store
 Thumbs.db
