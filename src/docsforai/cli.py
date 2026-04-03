@@ -23,7 +23,7 @@ app = typer.Typer(
     help=(
         "Specialized documentation-site crawler optimised for AI consumption.\n\n"
         "Automatically detects the documentation framework (VitePress, Docsify, GitBook, "
-        "MkDocs, Docusaurus, mdBook, Starlight, Mintlify, Feishu, or generic) and exports "
+        "MkDocs, Docusaurus, mdBook, Starlight, Mintlify, Feishu, Next.js Docs, or generic) and exports "
         "clean Markdown / JSONL output ready for LLMs and vector databases."
     ),
     add_completion=False,
@@ -119,7 +119,7 @@ def crawl(
                 "Auto-detection works for most sites. Use this flag only when the detected\n"
                 "type is wrong or the site uses an unusual configuration.\n\n"
                 "Supported values: vitepress · docsify · mintlify · feishu-docs ·\n"
-                "docusaurus · mdbook · mkdocs · starlight · gitbook · generic"
+                "docusaurus · mdbook · mkdocs · starlight · gitbook · nextdocs · generic"
             ),
         ),
     ] = None,

@@ -12,7 +12,7 @@
 
 ![1Panel Demo](assets/demo-1panel.gif)
 
-DocsForAI automatically detects the documentation framework of any site, extracts clean Markdown content structured by section, and outputs it in formats ready for LLMs and vector databases.
+DocsForAI automatically detects the documentation framework of any site, extracts clean Markdown content structured by section, and outputs it in formats ready for LLMs and vector databases. Supports VitePress, Docsify, GitBook, Next.js Docs, and more.
 
 ---
 
@@ -33,7 +33,7 @@ DocsForAI automatically detects the documentation framework of any site, extract
 
 ## Features
 
-- 🔍 **Auto-detection** — Recognises 10 popular documentation frameworks with no configuration
+- 🔍 **Auto-detection** — Recognises 11 popular documentation frameworks with no configuration
 - 🧹 **Clean content** — Framework-specific parsing removes nav bars, sidebars, footers, and other noise
 - 📁 **Multiple outputs** — multi-MD (RAG), single-MD (LLM context), and JSONL (vector DB)
 - ⚡ **Concurrent fetching** — Async HTTP with configurable concurrency and rate limiting
@@ -114,6 +114,7 @@ All frameworks are detected automatically — no configuration needed:
 | **Starlight**   | `#starlight__sidebar` / `.sl-markdown-content`        | Parse `<details>/<summary>` grouped nav; extract `[data-pagefind-body]`         | starlight.astro.build (35)      |
 | **GitBook**     | generator meta `GitBook` / `gitbook.com` scripts      | Discover all pages via `sitemap.xml`; remove heading anchor icons and SVG noise | agpt.co/docs (174)              |
 | **Feishu Docs** | Domain `open.feishu.cn`                               | Call Feishu internal API to fetch the full directory tree and raw Markdown      | Feishu Open Platform            |
+| **Next.js Docs** | `_next/` asset paths + `.mdx-content` class          | Discover all pages via `sitemap.xml`; extract `.mdx-content`; JSON-LD breadcrumb | tiptap.dev/docs (619)         |
 | **Generic**     | Fallback for all other sites                          | BFS crawl of same-domain links; heuristic main-content detection                | Any docs site                   |
 
 > Don't see the framework you need? Open an [Issue](https://github.com/dx2331lxz/DocsForAI/issues) or submit a PR.
@@ -192,7 +193,7 @@ Options:
                          Useful when auto-detection is incorrect.
                          Choices: vitepress · docsify · mintlify · feishu-docs
                                   docusaurus · mdbook · mkdocs · starlight
-                                  gitbook · generic
+                                  gitbook · nextdocs · generic
 
   --concurrency  INT     Max pages fetched in parallel.
                          Raise for speed; lower to avoid rate-limiting.
@@ -274,6 +275,7 @@ src/docsforai/
 │   ├── starlight.py
 │   ├── gitbook.py
 │   ├── feishu.py
+│   ├── nextdocs.py
 │   └── generic.py
 └── exporters/
     ├── multi_md.py     # Multi-file MD export

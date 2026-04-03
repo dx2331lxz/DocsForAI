@@ -165,4 +165,13 @@ async def detect_site_type(url: str, client: httpx.AsyncClient) -> SiteType:
     for el in soup.select("a[href*='mintlify.com']"):
         return SiteType.MINTLIFY
 
+    # ── Next.js docs (e.g. tiptap.dev) ────────────────────────────────────────
+    # Detect Next.js-based documentation sites that use .mdx-content for content
+    has_next = any(
+        "/_next/" in (tag.get("src") or tag.get("href") or "")
+        for tag in soup.find_all(["script", "link"])
+    )
+    if has_next and soup.select_one(".mdx-content"):
+        return SiteType.NEXTDOCS
+
     return SiteType.GENERIC

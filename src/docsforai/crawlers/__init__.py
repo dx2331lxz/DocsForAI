@@ -11,6 +11,7 @@ from .gitbook import GitBookCrawler
 from .mdbook import MdBookCrawler
 from .mintlify import MintlifyCrawler
 from .mkdocs import MkDocsCrawler
+from .nextdocs import NextDocsCrawler
 from .starlight import StarlightCrawler
 from .vitepress import VitePressCrawler
 
@@ -36,6 +37,8 @@ def make_crawler(site_type: SiteType, url: str, **kwargs) -> BaseCrawler:
             return StarlightCrawler(url, **kwargs)
         case SiteType.GITBOOK:
             return GitBookCrawler(url, **kwargs)
+        case SiteType.NEXTDOCS:
+            return NextDocsCrawler(url, **kwargs)
         case _:
             return GenericCrawler(url, **kwargs)
 
@@ -43,5 +46,6 @@ def make_crawler(site_type: SiteType, url: str, **kwargs) -> BaseCrawler:
 __all__ = [
     "make_crawler", "BaseCrawler", "VitePressCrawler", "DocsifyCrawler",
     "MintlifyCrawler", "FeishuDocsCrawler", "DocusaurusCrawler",
-    "MdBookCrawler", "MkDocsCrawler", "StarlightCrawler", "GitBookCrawler", "GenericCrawler",
+    "MdBookCrawler", "MkDocsCrawler", "StarlightCrawler", "GitBookCrawler",
+    "NextDocsCrawler", "GenericCrawler",
 ]
